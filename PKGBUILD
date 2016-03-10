@@ -10,13 +10,14 @@ license=(GPL2)
 depends=('fzf'
 	'pacman'
 	'yaourt'
-	'pacman-mirrorlist'
 	'sudo'
 	'gzip'
 	'downgrade'
 	'bash')
 makedepends=('git')
-optdepends=('update-notifier: Automatically get notified when updates are available')
+optdepends=('update-notifier: Automatically get notified when updates are available'
+    'pacman-mirrors: provides all mirrors for Manjaro'
+    'reflector: retrieve and filter the latest Pacman mirror list')
 source=("git://github.com/Manjaro-Pek/$pkgname")
 md5sums=('SKIP')
 

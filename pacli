@@ -166,7 +166,15 @@ pacli_desc='/tmp/pacli-desc'
             ;;
         2)
             echo
-            sudo pacman-mirrors -g && sudo pacman -Syy --color always
+            cmd='sudo pacman -Syy --color always'
+            if [ -f "/usr/bin/pacman-mirrors" ]; then
+                sudo pacman-mirrors -g && $cmd
+            elif [[ -f "/usr/bin/reflector" ]]; then
+                sudo reflector --verbose -l 4 -p http --sort rate --save /etc/pacman.d/mirrorlist && $cmd
+            else
+                $cmd
+            fi
+            unset cmd
             yaourt -Qdt
             paccache -ruvk0
             paccache -rvk2
@@ -261,8 +269,20 @@ pacli_desc='/tmp/pacli-desc'
         13)
             echo
             sudo rm -f /var/lib/pacman/db.lck
-            sudo pacman-mirrors -g && sudo pacman -Syy
-            sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring && sudo rm -r /etc/pacman.d/gnupg && sudo pacman-key --init && sudo pacman-key --populate archlinux manjaro && sudo pacman-key --refresh-keys
+            cmd='sudo pacman -Syy --color always'
+            if [ -f "/usr/bin/pacman-mirrors" ]; then
+                sudo pacman-mirrors -g && $cmd
+            elif [[ -f "/usr/bin/reflector" ]]; then
+                sudo reflector --verbose -l 4 -p http --sort rate --save /etc/pacman.d/mirrorlist && $cmd
+            else
+                $cmd
+            fi
+            unset cmd
+            if (pacman -Qq manjaro-keyring &>/dev/null); then
+                sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring && sudo rm -r /etc/pacman.d/gnupg && sudo pacman-key --init && sudo pacman-key --populate archlinux manjaro && sudo pacman-key --refresh-keys
+            else
+                sudo pacman -Sy gnupg archlinux-keyring && sudo rm -r /etc/pacman.d/gnupg && sudo pacman-key --init && sudo pacman-key --populate archlinux && sudo pacman-key --refresh-keys
+            fi
             sudo pacman -Syyuu --color always
             echo -e "\n$NC Most common Pacman errors fixed and system updated. To return to pacli press [Enter] $NC"
             read
