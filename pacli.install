@@ -1,0 +1,9 @@
+
+post_install() {
+   echo "create link for hook description"
+   ln -s "/usr/lib/$pkgname/pacli-description.sh" "/etc/pacman.d/hooks/pacli-description.sh"
+}
+
+post_remove() {
+   rm "/usr/lib/$pkgname/pacli-description.sh"
+}
