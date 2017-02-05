@@ -41,6 +41,10 @@ get_is_local() {
 # read console args
 get_options() {
     [ -n "$1" ] && COMMANDS=1
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+        usage_command
+        exit 0
+    fi
     ((LOCAL)) || return 1
     #only for test
 : <<'IGNORE'
@@ -274,28 +278,28 @@ menu_show()
 usage_command()
 {
     declare com
-    echo "Usage:"
+    echo -e "\tPacli Usage:"
     for com in ${!MENUALIAS[@]}; do
-          printf "   %-14s: menu %s\n" "$com" "${MENUALIAS[$com]}"
+          printf "\t   %-14s: menu %s\n" "$com" "${MENUALIAS[$com]}"
     done
 }
 
 # read choise after main menu
 read_choice()
 {
-    declare choice="$1"
+    declare choice="$1" ret
     if [ -n "$choice" ]; then
         declare -i int=$((choice+0))
         if ((int>0)); then
             echo $int
             return 0
         else
-            if [[ "$choice" == "-h" || "$choice" == "--help" ]]; then
-                usage_command
-                exit 111
-            fi
             # find and return item in MENUALIAS
-            echo "${MENUALIAS[$choice]}"
+            ret="${MENUALIAS[$choice]}"
+            if [ -z "$ret" ]; then
+                usage_command
+            fi
+            echo "$ret"
             return 0
         fi
     fi
