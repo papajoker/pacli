@@ -7,7 +7,7 @@ shopt -s extglob
 # secure load user params with trim(value) - not the command "source"
 load_user_params() {
     declare file="$HOME/.config/${pkgname}rc"
-    declare key value
+    declare key value item
     [ -f "$file" ] || return 1
     while IFS='=' read  key value; do
         key="${key%%*( )}"
@@ -16,6 +16,16 @@ load_user_params() {
             PARAMS[$key]="${value##*( )}"
         fi
     done < <(grep -v "^#" "${file}")
+    #override user console commands
+    for value in ${!MENUALIAS[@]}; do
+        key="${MENUALIAS[$value]}"
+        item="${PARAMS[$key]}"
+        if [ -n "$item" ]; then
+            unset MENUALIAS[$value]
+            MENUALIAS[$item]="$key"
+        fi
+    done
+    readonly MENUALIAS
     [ -n "${PARAMS[boxcolor]}" ] && PARAMS[boxcolor]="\e[${PARAMS[boxcolor]}"
     readonly PARAMS
 }
@@ -28,10 +38,12 @@ get_is_local() {
     fi
 }
 
-# read console args for debug/tests
+# read console args
 get_options() {
+    [ -n "$1" ] && COMMANDS=1
     ((LOCAL)) || return 1
     #only for test
+: <<'IGNORE'
     unset TESTMENU
     while getopts tw:l: option; do
         case $option in
@@ -41,6 +53,8 @@ get_options() {
         esac
     done
     # end get params for test
+IGNORE
+
 }
 
 # show text file created by hook if exist
@@ -62,7 +76,7 @@ menu_sep() {
         echo ""
         return 0
     fi
-    declare bar='' 
+    declare bar=''
     declare -i i
     for (( i=1; i<=$WMENU; i++ )); do
         bar="${bar}${1:1:1}"
@@ -256,13 +270,34 @@ menu_show()
     printf "\n$NC%s$NC\n" "$(mcenter $PROMPT)"
 }
 
+#show pacli usage
+usage_command()
+{
+    declare com
+    echo "Usage:"
+    for com in ${!MENUALIAS[@]}; do
+          printf "   %-14s: menu %s\n" "$com" "${MENUALIAS[$com]}"
+    done
+}
+
 # read choise after main menu
 read_choice()
 {
     declare choice="$1"
     if [ -n "$choice" ]; then
         declare -i int=$((choice+0))
-        ((int>0)) && { echo $int; return 0; }
+        if ((int>0)); then
+            echo $int
+            return 0
+        else
+            if [[ "$choice" == "-h" || "$choice" == "--help" ]]; then
+                usage_command
+                exit 111
+            fi
+            # find and return item in MENUALIAS
+            echo "${MENUALIAS[$choice]}"
+            return 0
+        fi
     fi
     if ((MENUEX==1)); then
         choice=$(input_mnu "MENU")

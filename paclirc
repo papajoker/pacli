@@ -1,4 +1,4 @@
-#pacli user configuration 
+#pacli user configuration
 #$HOME/.config/paclirc
 
 # helpred show help before red command; default 1
@@ -22,3 +22,7 @@ cancellist=1
 
 # color frame : 0m null , 1m bold, 32m green 33m yellow ...
 #boxcolor=32m
+
+#alias menu number for terminal commands
+1=update
+10=help

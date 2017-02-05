@@ -30,6 +30,7 @@
 pkgname=pacli
 
 unset NOCLEAR
+unset COMMANDS
 
 export TEXTDOMAIN=pacli
 export TEXTDOMAINDIR="/usr/share/locale"
@@ -49,6 +50,27 @@ declare -A PARAMS=(
 libfile='./lib/pacli-tools.sh'
 [ -f "$libfile" ] || libfile="/usr/lib/${pkgname}/pacli-tools.sh"
 . "$libfile"
+
+declare -A MENUALIAS=(
+    [update]=1
+    [clean]=2
+    [inst]=3
+    [rm]=4
+    [info]=5
+    [lo]=6
+    [dep]=7
+    [depr]=8
+    [defrag]=9
+    [help]=10
+    [downgrade]=11
+    [log]=12
+    [aur]=19
+    [aurf]=20
+    [find]=21
+    [insta]=22
+    [ls]=23
+    [config]=24
+)
 
 # load user config
 load_user_params
@@ -114,7 +136,7 @@ declare -r pacli_desc='/tmp/pacli-desc'
 # load helpers functions
 libfile="./lib/helper-${PARAMS['helper']}.sh"
 [ -f "$libfile" ] || libfile="/usr/lib/${pkgname}/helper-${PARAMS['helper']}.sh"
-[ -f "$libfile" ] || { echo "$(gettext 'helper not supported')" 1>&2 ; exit 1; } 
+[ -f "$libfile" ] || { echo "$(gettext 'helper not supported')" 1>&2 ; exit 1; }
 . "$libfile"
 
 ########    functions    ########
@@ -149,7 +171,7 @@ package_information()
 #6  List Local Package Files
 package_list_files()
 {
-    declare pkg 
+    declare pkg
     pkg=($(print_enter "$(gettext 'Select a packages of which to list all files (use TAB to toggle selection)')" \
             "$(helper '-Qq')" '-m' ))
     (($?!=0)) && return 1
@@ -189,7 +211,7 @@ fix_errors()
             sudo pacman -U "manjaro-keyring${version}-any.pkg.tar.xz" --noconfirm && \
             sudo rm "manjaro-keyring${version}-any.pkg.tar.xz"
 
-        # the following command sometimes prevents an error connecting to the key server		
+        # the following command sometimes prevents an error connecting to the key server
         sudo dirmngr </dev/null
         echo "pacman-key --init"
         sudo pacman-key --init && \
@@ -360,10 +382,11 @@ menu_calculate_size "$(gettext 'Enter a number between 0..%s and press [Enter] -
 
 main()
 {
-  declare arg="$1"
+  declare arg="$@"
   while true; do
     menu_show "$screen_buffer"
     choix="$(read_choice "$arg")"
+    (($?!=0)) && { clear; echo "$choix"; exit; }
     arg=''
     case $choix in
         m)
@@ -383,7 +406,7 @@ main()
             helper -Qdt
             paccache -ruvk0
             paccache -rvk2
-			
+
 			disk=$(lsblk -o "name,mountpoint" -pa | sed -n '/^\//h;/\/$/{g;p}' | cut -d/ -f3)
 			disk="${disk:0:3}"
 			if [[ -n "$disk" && -e "/dev/$disk" ]]; then
@@ -391,7 +414,7 @@ main()
                     && sudo pacman-optimize
 			fi
 			unset disk
-			
+
 			echo
             print_hook
             print_prompt "$(gettext 'System is updated and cache is cleaned')." "" 1
@@ -453,7 +476,7 @@ main()
             ;;
         12)
             echo
-			$(print_enter "$(gettext 'Enter one or more filter terms')" "$(tail -2000 /var/log/pacman.log)" '-m +s -q alpm --tac' ) >> /tmp/pacli-log			
+			$(print_enter "$(gettext 'Enter one or more filter terms')" "$(tail -2000 /var/log/pacman.log)" '-m +s -q alpm --tac' ) >> /tmp/pacli-log
             ;;
         13)
             help_text 13 "${PARAMS['helpred']}" || continue
@@ -538,7 +561,7 @@ main()
             ;;
         23)
             echo
-            helper -Qem 
+            helper -Qem
             print_prompt "$(gettext 'All locally installed packages listed')." "" 1
             ;;
         24)
@@ -579,6 +602,8 @@ main()
             ((NOCLEAR)) || clear
             ;;
     esac
+    # exit if command passed by consol
+    [ -n "$COMMANDS" ] && return 0
   done
 }
 
@@ -587,5 +612,5 @@ if [ "${BASH_SOURCE[0]}" == "$0" ]; then
     #make home screen
     declare -r screen_buffer=$(menu_load)
     #loop menu
-    main "${1:-0}"
+    main "$@"
 fi
