@@ -1,0 +1,24 @@
+#Extend pacman
+# Add this function in .bashrc (.zshrc)
+# or .source /usr/lib/pacli/pacmanrc in .bashrc
+function pacman(){
+	case "$1" in
+        pacli)
+            shift
+            pacli $@
+        ;;
+        -*)
+            command -p pacman $@
+            if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+                echo "-- add Pacli commands:"
+                pacli -h
+            fi
+        ;;
+        mirrors)
+            shift
+            pacman-mirrors $@
+        ;;
+        *)
+            pacli $@
+	esac
+}
