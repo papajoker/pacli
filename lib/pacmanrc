@@ -11,7 +11,7 @@ function pacman(){
             command -p pacman $@
             if [[ "$1" == "-h" || "$1" == "--help" ]]; then
                 echo "-- add Pacli commands:"
-                pacli -h
+                pacli -h | sort -n -k4
             fi
         ;;
         mirrors)
